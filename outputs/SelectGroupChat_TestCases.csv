@@ -1,0 +1,14 @@
+Test Case ID,Test Case Name,Preconditions,Test Steps,Expected Result
+TC_001,Select Group Chat,User is logged into the chat application,1. Open the chat application.
+2. Navigate to the group chat section.
+3. Select a group chat from the list.
+4. Verify that the selected group chat opens successfully.,The selected group chat is displayed with the correct messages and participants.
+TC_002,Verify Group Chat Participants,User is in a group chat,1. Open the desired group chat.
+2. Click on the group info icon.
+3. Check the list of participants.,The list of participants matches the expected members of the group chat.
+TC_003,Send Message in Group Chat,User is in a group chat,1. Open the desired group chat.
+2. Type a message in the message input box.
+3. Press the send button.,The message appears in the group chat for all participants to see.
+TC_004,Leave Group Chat,User is in a group chat,1. Open the desired group chat.
+2. Click on the group info icon.
+3. Select the option to leave the group chat.,User is removed from the group chat and no longer sees it in their chat list.

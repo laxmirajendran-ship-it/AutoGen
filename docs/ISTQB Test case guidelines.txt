@@ -1,0 +1,38 @@
+##Structure and content
+- Unique ID and clear title: Each test case needs a unique identifier and a title that clearly references the feature being tested.
+- Description: Include a summary of the test's objective.
+- Pre-conditions: List any conditions that must be met before the test can be executed.
+- Test steps: Break down the test into small, actionable steps. Avoid composite phrases and keep the steps concise (e.g., a maximum of ten steps).
+- Test data: Specify the exact input data required for the test.
+- Expected results: Clearly describe the expected outcome of the test, ensuring it is specific and verifiable.
+-Post-conditions: Outline the state of the system after the test has been executed. 
+
+************************************************************************************************************
+##Best practices for quality testcases
+- Clarity and simplicity: 
+	Test steps should be simple, clear
+	One testcase should focus on single objective.
+	 
+
+- Reusability and Modularity: 
+	Identify and reuse common pre-conditions (e.g., Login as a customer)
+
+- Traceability 
+	Link each test cases to specific requirements, user stories, or features (eg., role based - Bank Customer, bank Employee, etc)
+	
+
+- Expected Result Guidelines: 
+	Write specific outcome in complete sentence
+	Avoid vague phrases like "it should work"
+	Example of good expected result "Application ID is created and displayed in the Review page"
+	
+
+- Negative Test Cases
+	Write test cases to cover all requirements with expected outcomes
+	Cover negative testcases for invalid, missing inputs
+	Validate proper error messages and restricted field behavior
+	
+- Avoid repetition: 
+	Do not repeat test steps. If another test case's steps are required, reference its ID in the pre-conditions.
+
+

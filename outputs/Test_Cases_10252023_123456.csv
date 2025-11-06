@@ -1,0 +1,19 @@
+Test Case ID,Test Case Name,Preconditions,Test Steps,Expected Result
+TC_001,Verify Password Reset Link Functionality,User must have a registered email address associated with the online banking account.,1. Navigate to the online banking login page.
+2. Click on the "Forgot Password?" link.
+3. Enter the registered email address in the provided field.
+4. Click on the "Submit" button.
+5. Check the email inbox for the password reset email.,The user receives an email with a password reset link.
+TC_002,Verify Password Reset Link Expiration,User must have received a password reset email.,1. Click on the password reset link in the email.
+2. Wait for a specified time (e.g., 30 minutes).
+3. Attempt to use the link again.,The user receives a message indicating that the link has expired.
+TC_003,Verify Successful Password Reset,User must have received a password reset email and clicked the link.,1. Click on the password reset link in the email.
+2. Enter a new password in the provided field.
+3. Confirm the new password.
+4. Click on the "Reset Password" button.,The user is redirected to the login page with a success message indicating the password has been reset.
+TC_004,Verify Password Reset with Invalid Email,User must be on the password reset page.,1. Enter an unregistered email address in the password reset field.
+2. Click on the "Submit" button.,The user receives an error message indicating that the email address is not associated with any account.
+TC_005,Verify Password Reset with Mismatched Passwords,User must have received a password reset email and clicked the link.,1. Click on the password reset link in the email.
+2. Enter a new password in the first field.
+3. Enter a different password in the confirmation field.
+4. Click on the "Reset Password" button.,The user receives an error message indicating that the passwords do not match.

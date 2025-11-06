@@ -1,0 +1,108 @@
+{
+    "provider": "autogen_agentchat.teams.RoundRobinGroupChat",
+    "component_type": "team",
+    "version": 1,
+    "component_version": 1,
+    "description": "A team that runs a group chat with participants taking turns in a round-robin fashion\nto publish a message to all.",
+    "label": "RoundRobinGroupChat",
+    "config": {
+        "name": "RoundRobinGroupChat",
+        "description": "A team of agents.",
+        "participants": [
+            {
+                "provider": "autogen_agentchat.agents.UserProxyAgent",
+                "component_type": "agent",
+                "version": 1,
+                "component_version": 1,
+                "description": "An agent that can represent a human user through an input function.",
+                "label": "UserProxyAgent",
+                "config": {
+                    "name": "TestManager",
+                    "description": "You are a TestManager. Take clear requirements from the user only oncefor creating UserStory and Acceptance Criteria that to be written in a well-structured Gherkin syntax.Ensure you use the correct Gherkin keywords: Feature, Scenario, Given, When, Then, And, But. get input from the user to terminate the conversation by typing 'TERMINATE'."
+                }
+            },
+            {
+                "provider": "autogen_agentchat.agents.AssistantAgent",
+                "component_type": "agent",
+                "version": 2,
+                "component_version": 2,
+                "description": "An agent that provides assistance with tool use.\nThe :meth:`on_messages` returns a :class:`~autogen_agentchat.base.Response`\nin which :attr:`~autogen_agentchat.base.Response.chat_message` is the final\nresponse message.",
+                "label": "AssistantAgent",
+                "config": {
+                    "name": "test_case_writer",
+                    "model_client": {
+                        "provider": "autogen_ext.models.openai.OpenAIChatCompletionClient",
+                        "component_type": "model",
+                        "version": 1,
+                        "component_version": 1,
+                        "description": "Chat completion client for OpenAI hosted models.",
+                        "label": "OpenAIChatCompletionClient",
+                        "config": {
+                            "temperature": 0.0,
+                            "model": "gpt-4o-mini"
+                        }
+                    },
+                    "workbench": [
+                        {
+                            "provider": "autogen_core.tools.StaticStreamWorkbench",
+                            "component_type": "workbench",
+                            "version": 1,
+                            "component_version": 1,
+                            "description": "A workbench that provides a static set of tools that do not change after\neach tool execution, and supports streaming results.",
+                            "label": "StaticStreamWorkbench",
+                            "config": {
+                                "tools": [
+                                    {
+                                        "provider": "autogen_core.tools.FunctionTool",
+                                        "component_type": "tool",
+                                        "version": 1,
+                                        "component_version": 1,
+                                        "description": "Create custom tools by wrapping standard Python functions.",
+                                        "label": "FunctionTool",
+                                        "config": {
+                                            "source_code": "def write_file(filename: str, content: str) -> dict:\n    print(filename, content)\n    work_dir = Path.cwd() / \"outputs\"\n    work_dir.mkdir(exist_ok=True)\n    p = work_dir / filename\n    p.write_text(content, encoding=\"utf-8\")\n    print(\"Saved CSV to:\", p)\n    return {\"path\": str(p)}\n",
+                                            "name": "write_file",
+                                            "description": "Write given content to a file in the current working directory. Args: filename, content",
+                                            "global_imports": [],
+                                            "has_cancellation_support": false
+                                        }
+                                    }
+                                ],
+                                "tool_overrides": {}
+                            }
+                        }
+                    ],
+                    "model_context": {
+                        "provider": "autogen_core.model_context.UnboundedChatCompletionContext",
+                        "component_type": "chat_completion_context",
+                        "version": 1,
+                        "component_version": 1,
+                        "description": "An unbounded chat completion context that keeps a view of the all the messages.",
+                        "label": "UnboundedChatCompletionContext",
+                        "config": {}
+                    },
+                    "description": "An agent that provides assistance with ability to use tools.",
+                    "system_message": "You are a skilled test case writer. Your task is to create detailed and effective test cases in csv format based on the requirements provided by the test_manager. Ensure that each test case includes clear steps, follows best practices as mentioned in the documents in ./docs folder.Produce test cases in csv format with the following columns in the exact order: 1. Test Case ID (Unique identifier, e.g., TC_001)2. Test Case Name (Brief, descriptive title)3. Preconditions (Any setup required before executing the test)4. Test Steps (Numbered steps to execute the test)5. Expected Result (The expected outcome if the test passes)Ensure each column is properly populated for each test case and return the output as a Markdown table",
+                    "model_client_stream": false,
+                    "reflect_on_tool_use": false,
+                    "tool_call_summary_format": "{result}",
+                    "max_tool_iterations": 1,
+                    "metadata": {}
+                }
+            }
+        ],
+        "termination_condition": {
+            "provider": "autogen_agentchat.conditions.TextMentionTermination",
+            "component_type": "termination",
+            "version": 1,
+            "component_version": 1,
+            "description": "Terminate the conversation if a specific text is mentioned.",
+            "label": "TextMentionTermination",
+            "config": {
+                "text": "TERMINATE"
+            }
+        },
+        "max_turns": 2,
+        "emit_team_events": false
+    }
+}

@@ -1,0 +1,40 @@
+TC_001,Initiate password reset via Forgot Password,User has a valid online banking account with a registered email and phone; account active; testing environment,Open the online banking login page.,Login page loads successfully
+TC_001,Initiate password reset via Forgot Password,User has a valid online banking account with a registered email and phone; account active; testing environment,Click Forgot Password or Reset Password link,Forgot Password page opens
+TC_001,Initiate password reset via Forgot Password,User has a valid online banking account with a registered email and phone; account active; testing environment,Enter registered username or email,User details validated and accepted
+TC_001,Initiate password reset via Forgot Password,User has a valid online banking account with a registered email and phone; account active; testing environment,Select Email as reset method,Email reset option selected
+TC_001,Initiate password reset via Forgot Password,User has a valid online banking account with a registered email and phone; account active; testing environment,Submit the reset request,Reset request submitted successfully
+TC_001,Initiate password reset via Forgot Password,User has a valid online banking account with a registered email and phone; account active; testing environment,System sends password reset link to registered email,Password reset email delivered to the registered email inbox
+TC_001,Initiate password reset via Forgot Password,User has a valid online banking account with a registered email and phone; account active; testing environment,Display confirmation message on screen,Confirmation message displayed to user
+TC_002,Reset Password via Email Link,Valid reset link token provided via test email; token not expired; account exists,Click the password reset link from the email,Reset page opens with valid token
+TC_002,Reset Password via Email Link,Valid reset link token provided via test email; token not expired; account exists,Enter a new password that meets security requirements,New password accepted and criteria met
+TC_002,Reset Password via Email Link,Valid reset link token provided via test email; token not expired; account exists,Enter re-enter new password,Passwords match
+TC_002,Reset Password via Email Link,Valid reset link token provided via test email; token not expired; account exists,Submit the new password,Password updated successfully
+TC_002,Reset Password via Email Link,Valid reset link token provided via test email; token not expired; account exists,Login with the new password to verify,User can log in with the new password
+TC_003,Reset Password via SMS Code,Phone number verified and capable of receiving SMS; account active,From login page click Forgot Password,Forgot Password page loads
+TC_003,Reset Password via SMS Code,Phone number verified and capable of receiving SMS; account active,Enter registered username,Username accepted and options shown
+TC_003,Reset Password via SMS Code,Phone number verified and capable of receiving SMS; account active,Select SMS as reset method,SMS option selected and verification prompted
+TC_003,Reset Password via SMS Code,Phone number verified and capable of receiving SMS; account active,Enter the OTP received via SMS,OTP validated
+TC_003,Reset Password via SMS Code,Phone number verified and capable of receiving SMS; account active,Enter a new password that meets policy,Password updated successfully
+TC_003,Reset Password via SMS Code,Phone number verified and capable of receiving SMS; account active,Confirm login with new password,Login successful
+TC_004,Password Reset Weak Password Test,User has a valid online banking account with a registered email; account active,Initiate password reset for the user,Reset page loads
+TC_004,Password Reset Weak Password Test,User has a valid online banking account with a registered email; account active,Open the reset page and enter weak password,password does not meet complexity requirements
+TC_004,Password Reset Weak Password Test,User has a valid online banking account with a registered email; account active,Enter a strong password that meets policy,Passwords meet complexity requirements
+TC_004,Password Reset Weak Password Test,User has a valid online banking account with a registered email; account active,Submit the password reset form,Password updated successfully
+TC_004,Password Reset Weak Password Test,User has a valid online banking account with a registered email; account active,Login with the new password to verify,Login successful
+TC_005,Expired Password Reset Token Test,Expired token available; account exists,Open the expired reset link,Token is invalid or expired
+TC_005,Expired Password Reset Token Test,Expired token available; account exists,System shows token expired or invalid,User prompted to request a new reset
+TC_005,Expired Password Reset Token Test,Expired token available; account exists,Request a new password reset,New reset flow initiated and token sent
+TC_005,Expired Password Reset Token Test,Expired token available; account exists,Open the new reset link from email,New reset page loads with valid token
+TC_005,Expired Password Reset Token Test,Expired token available; account exists,Enter a new password and submit,Password updated successfully
+TC_005,Expired Password Reset Token Test,Expired token available; account exists,Login with the new password to verify,Login successful
+TC_006,Rate Limiting on Reset Requests,User exists; test environment rate limits IP,Submit first password reset request,Reset request accepted; email sent
+TC_006,Rate Limiting on Reset Requests,User exists; test environment rate limits IP,Submit second password reset request within short interval,System indicates too many requests or CAPTCHA required
+TC_006,Rate Limiting on Reset Requests,User exists; test environment rate limits IP,Submit third password reset request within short interval,System continues blocking or CAPTCHA
+TC_006,Rate Limiting on Reset Requests,User exists; test environment rate limits IP,Wait cooldown period and submit another request,Reset link sent after cooldown
+TC_006,Rate Limiting on Reset Requests,User exists; test environment rate limits IP,Attempt reset with the new link and verify,Password reset link works and user can proceed
+TC_007,End-to-End Password Reset and Login,User has a valid online banking account with a registered email; account active,Initiate password reset for the user via email,Reset link sent to email
+TC_007,End-to-End Password Reset and Login,User has a valid online banking account with a registered email; account active,Open the reset link from email,Reset page opens with valid token
+TC_007,End-to-End Password Reset and Login,User has a valid online banking account with a registered email; account active,Enter a new password that meets policy,Password meets policy
+TC_007,End-to-End Password Reset and Login,User has a valid online banking account with a registered email; account active,Confirm and submit the new password,Password updated successfully
+TC_007,End-to-End Password Reset and Login,User has a valid online banking account with a registered email; account active,Go to login page and sign in with the new password,Login successful
+TC_007,End-to-End Password Reset and Login,User has a valid online banking account with a registered email; account active,Verify landing on dashboard after login,Dashboard displayed
