@@ -1,6 +1,6 @@
 import asyncio
 from pathlib import Path
-from behave import *
+# from behave import *
 import os
 import json
 import builtins
@@ -54,7 +54,11 @@ async def main() -> None:
 
     #gpt-5-nano gpt-4o-mini gpt-5
     # model_client = OpenAIChatCompletionClient(model="gpt-4.1", temperature=0)
-    model_client = OllamaChatCompletionClient(model="llama3", temperature=0)
+    model_client = OllamaChatCompletionClient(model="qwen3:1.7b", temperature=0,model_capabilities= {
+          "vision": False,
+          "function_calling": True,
+          "json_output": False
+        })
     model_context = BufferedChatCompletionContext(buffer_size=5)
 
     # Agent to take user requirements and create user story and acceptance criteria in gherkin syntax.
@@ -89,7 +93,7 @@ async def main() -> None:
                 "name the csv file in the format 'Test_Cases_MMDDYYY_HHMMSS.csv'"),                
                     
                 # "When finished, CALL the tool 'write_file' with two arguments: "
-                # tools=[write_file_tool],
+                tools=[write_file_tool],
 
         )
 
