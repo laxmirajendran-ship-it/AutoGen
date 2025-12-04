@@ -1,57 +1,75 @@
-from dotenv import load_dotenv
 import asyncio
-from pathlib import Path
 import os
-import datetime
 import json
-from autogen_core.model_context import BufferedChatCompletionContext
+import datetime
+from pathlib import Path
+from typing import Literal
+
+from dotenv import load_dotenv
+
 from autogen_agentchat.agents import AssistantAgent, UserProxyAgent
 from autogen_agentchat.teams import RoundRobinGroupChat
-from autogen_ext.code_executors.local import LocalCommandLineCodeExecutor
-from autogen_ext.models.ollama import OllamaChatCompletionClient
 from autogen_core.tools import FunctionTool
 from autogen_ext.models.openai import OpenAIChatCompletionClient
-from autogen_core.models import ModelInfo
-from typing import Literal
-# Function to write output to a file
+from autogen_ext.models.ollama import OllamaChatCompletionClient
+
+
+# ----------------------------
+# FILE WRITER TOOLS
+# ----------------------------
 def write_file(content: str, type: Literal["test_case", "step_definition"] = "test_case") -> dict:
+    """Writes test cases or step definitions to disk."""
     work_dir = Path.cwd() / "outputs"
     work_dir.mkdir(exist_ok=True)
-    if type == "test_case":
-        filename = f"Test_Cases_{datetime.datetime.now().strftime('%m%d%Y_%H%M%S')}.csv"
-    else:
-        filename = f"steps_{datetime.datetime.now().strftime('%m%d%Y_%H%M%S')}.py"
-    p = work_dir / filename
-    p.write_text(content, encoding="utf-8")
-    return {"path": str(p)}
+
+    ts = datetime.datetime.now().strftime("%m%d%Y_%H%M%S")
+    filename = (
+        f"Test_Cases_{ts}.csv" if type == "test_case"
+        else f"steps_{ts}.py"
+    )
+
+    path = work_dir / filename
+    path.write_text(content, encoding="utf-8")
+    return {"path": str(path)}
 
 write_file_tool = FunctionTool(
     write_file,
     name="write_file",
-    description="Write given content to a file in the current working directory. Args: content, type (test_case or step_definition)",
+    description="Save CSV test cases or Python step definitions."
 )
 
-class SimpleLocalCommandLineCodeExecutor(LocalCommandLineCodeExecutor):
-    async def start(self):
-        return None
 
-    async def stop(self):
-        return None
+def write_java_file(filename: str, content: str) -> dict:
+    work_dir = Path.cwd() / "outputs" / "java"
+    work_dir.mkdir(parents=True, exist_ok=True)
 
+    path = work_dir / filename
+    path.write_text(content, encoding="utf-8")
+    return {"path": str(path)}
+
+write_java_tool = FunctionTool(
+    write_java_file,
+    name="write_java_file",
+    description="Write Java Step Definition file. Args: filename, content",
+)
+
+
+# ----------------------------
+# MAIN AUTOGEN WORKFLOW
+# ----------------------------
 async def run_autogen_workflow(requirements: str):
+    import streamlit as st
+
     load_dotenv()
-    """
-    This function orchestrates the multi-agent workflow.
-    """
-    # This inner function is used by the UserProxyAgent to get the initial user requirement.
+
     def get_requirements_input(prompt: str) -> str:
         return requirements
-    
-    # Load configuration from config.json
-    config_path = Path(__file__).parent / "config.json"
-    with open(config_path, "r") as f:
-        config = json.load(f)
 
+    # Load config.json configuration
+    config_path = Path(__file__).parent / "config.json"
+    config = json.loads(Path(config_path).read_text())
+
+    # Choose LLM client
     if config.get("use_ollama"):
         model_client = OllamaChatCompletionClient(
             model=config.get("ollama_model_name"),
@@ -76,46 +94,51 @@ async def run_autogen_workflow(requirements: str):
             api_key=config.get("openai_api_key") if config.get("openai_api_key") != "" else os.environ.get("OPENAI_API_KEY")
         )
 
-
-    # This agent is the entry point, representing the user who provides the initial requirement.
+    # -------------------------
+    # USER AGENT
+    # -------------------------
     user_proxy = UserProxyAgent(
         "user_proxy",
         input_func=get_requirements_input,
+        
         # This agent does not need a system message as it only provides the initial prompt.
     )
 
-    # Step 2: An agent called 'Test Manager" writes a detailed userstory and acceptance criteria
+    # -------------------------
+    # TEST MANAGER (creates Gherkin)
+    # -------------------------
     TestManager = AssistantAgent(
-        "TestManager",
+        name="TestManager",
         model_client=model_client,
-        system_message="""You are a TestManager. Your first task is to take the requirements provided and create a User Story and Acceptance Criteria.
-Create a User Story and Acceptance Criteria from the given requirements.
-The User Story and Acceptance Criteria must be written in a well-structured Gherkin syntax.
-Ensure you use the correct Gherkin keywords: Feature, Scenario, Given, When, Then, And, But.
-After providing the Gherkin content, ask the 'test_case_writer' to proceed. Do not ask for user input again.
-Do not use termination phrases like 'TERMINATE'.""",
+        system_message="""
+You are a Test Manager. 
+1. Convert requirements into a User Story.
+2. Produce Acceptance Criteria.
+3. Output everything in proper Gherkin syntax (Feature/Scenario/Given/When/Then).
+Do NOT request user input again.
+"""
     )
 
-    # Step 3: An agent called 'Test case writer" writes detailed test cases
+    # -------------------------
+    # TEST CASE WRITER
+    # -------------------------
     test_case_writer = AssistantAgent(
-        "test_case_writer",
+        name="test_case_writer",
         model_client=model_client,
-        system_message=(
-            "You are a skilled test case writer. Your task is to create detailed and effective test cases in CSV format "
-            "based on the User Story and Acceptance Criteria provided by the TestManager. "
-            "Refer to examples and guidelines in the './docs' folder for best practices.\n"
-            "First, generate a unique filename for the test cases using the current timestamp (e.g., 'Test_Cases_YYYYMMDD_HHMMSS.csv').\n"
-            "Then, produce the test cases in CSV format with the following columns in the exact order:\n"
-            "1. Test Case ID (e.g., TC_001)\n"
-            "2. Test Case Name\n"
-            "3. Preconditions\n"
-            "4. Test Steps (Numbered steps)\n"
-            "5. Expected Result\n\n"
-            "Ensure each column is properly populated. "
-            "Finally, use the 'write_file' tool to save the test cases to the generated CSV file. "
-            "After saving the file, ask the 'test_case_reviewer' to review the file you have created."
-        ),
         tools=[write_file_tool],
+        system_message="""
+You write detailed test cases in CSV format.
+
+Columns:
+1. Test Case ID
+2. Test Case Name
+3. Preconditions
+4. Test Steps (Numbered)
+5. Expected Result
+
+Once generated, call the write_file tool:
+write_file(content=<csv>, type="test_case")
+"""
     )
 
     def write_java_file(filename: str, content: str) -> dict:
@@ -194,42 +217,84 @@ Do not use termination phrases like 'TERMINATE'.""",
                 yield {"source": "System", "content": message}
                 continue
 
-            # The message is a dictionary.
-            source_name = message.name if hasattr(message, 'name') else "System"
-            content = message.content if hasattr(message, 'content') else None
-            role = message.role if hasattr(message, 'role') else "user"
+Otherwise provide clear feedback.
+"""
+    )
 
+    # -------------------------
+    # STEP DEFINITION AGENT (Java)
+    # -------------------------
+    step_definition_agent = AssistantAgent(
+        name="step_definition_agent",
+        model_client=model_client,
+        tools=[write_java_tool],
+        system_message="""
+Generate Java Selenium+Cucumber step definitions.
 
-            if not source_name or content is None:
+Rules:
+- Output only valid Java.
+- Class must be named StepDefinition.
+- Use @Given/@When/@Then annotations.
+- Convert Gherkin steps into Java methods.
+- Use Selenium driver.findElement(...) examples.
+- Afterwards call:
+
+write_java_file(filename="StepDefinition.java", content=<java_code>)
+"""
+    )
+
+    # -------------------------
+    # TEAM ORCHESTRATION
+    # -------------------------
+    # Get selected agents from session state
+    selected_agents = [user_proxy]  # Start with user_proxy
+
+    # Always include TestManager if either user_story_writer or test_case_writer is selected
+    if st.session_state.agents.get('user_story_writer', False) or st.session_state.agents.get('test_case_writer', False):
+        selected_agents.append(TestManager)
+    
+    # Add other agents based on selection
+    if st.session_state.agents.get('test_case_writer', False):
+        selected_agents.append(test_case_writer)
+    if st.session_state.agents.get('step_definition_writer', False):
+        selected_agents.append(step_definition_agent)
+        
+    
+    # Set max_turns based on number of agents
+    max_turns = len(selected_agents)
+    team = RoundRobinGroupChat(
+        selected_agents,
+        max_turns=max_turns
+    )
+
+    # -------------------------
+    # RUN & STREAM OUTPUT
+    # -------------------------
+    try:
+        async for message in team.run_stream(task=requirements):
+            if hasattr(message, "source") and isinstance(message.source, str) and message.source == "user":
                 continue
 
-            if not isinstance(content, str):
-                continue
-
-            content = content.strip()
-            if not content:
-                continue
-
-            # Check for tool call results (file paths)
-            if role == "tool":
+            # If the message came from a tool, show the file path
+            if getattr(message, "role", "") == "tool":
                 try:
-                    data = json.loads(content)
+                    data = json.loads(message.content)
                     if "path" in data:
-                        yield {"source": "System", "content": f"File created: {data['path']}", "path": data['path']}
-                except (json.JSONDecodeError, TypeError):
-                    # Not a valid JSON, or content is not a string, stream as is
+                        yield {
+                            "source": message.name,
+                            "content": f"File created: {data['path']}",
+                            "path": data["path"]
+                        }
+                except:
                     pass
-                # Continue to the next message, do not stream tool output as agent message
                 continue
 
-            # Stream agent messages
-            words = content.split(' ')
-            for word in words:
-                yield {"source": source_name, "content": word + " "}
+            # Stream normal messages
+            if hasattr(message, "content") and isinstance(message.content, str):
+                yield {"source": message.source, "content": message.content}
 
     except Exception as e:
-        error_message = f"An error occurred: {str(e)}"
-        print(error_message)
-        yield {"source": "System", "content": error_message}
+        yield {"source": "System", "content": f"ERROR: {e}"}
+
     finally:
         await model_client.close()

@@ -22,6 +22,59 @@ else:
 
 temperature = st.sidebar.text_input("Temperature", config.get("temperature", 0.0),disabled=True)
 
+# Agent selection with dependencies
+st.sidebar.markdown("### Select Agents")
+
+# Initialize session state for checkboxes if not exists
+if 'agents' not in st.session_state:
+    st.session_state.agents = {
+        'user_story_writer': True,
+        'test_case_writer': True,
+        'step_definition_writer': True
+    }
+
+# Handle checkbox dependencies
+def update_checkboxes():
+    # Dependency: If Step Definition Writer is checked, Test Case Writer must be checked.
+    if st.session_state.agents['step_definition_writer']:
+        st.session_state.agents['test_case_writer'] = True
+    # Dependency: If Test Case Writer is unchecked, Step Definition Writer must be unchecked.
+    elif not st.session_state.agents['test_case_writer']:
+        st.session_state.agents['step_definition_writer'] = False
+
+# Determine which checkboxes should be disabled
+agent_states = st.session_state.agents
+num_checked = sum(agent_states.values())
+
+# user_story_disabled = (num_checked == 1 and agent_states['user_story_writer'])
+# test_case_disabled = (num_checked == 1 and agent_states['test_case_writer']) or agent_states['step_definition_writer']
+# step_def_disabled = (num_checked == 1 and agent_states['step_definition_writer'])
+
+# Create checkboxes
+st.session_state.agents['user_story_writer'] = st.sidebar.checkbox(
+    "User Story Writer",
+    value=st.session_state.agents['user_story_writer'],
+    key='user_story_checkbox',
+    on_change=update_checkboxes,
+    # disabled=user_story_disabled
+)
+
+st.session_state.agents['test_case_writer'] = st.sidebar.checkbox(
+    "Test Case Writer",
+    value=st.session_state.agents['test_case_writer'],
+    key='test_case_checkbox',
+    on_change=update_checkboxes,
+    # disabled=test_case_disabled
+)
+
+st.session_state.agents['step_definition_writer'] = st.sidebar.checkbox(
+    "Step Definition Writer",
+    value=st.session_state.agents['step_definition_writer'],
+    key='step_def_checkbox',
+    on_change=update_checkboxes,
+    # disabled=step_def_disabled
+)
+
 # Main app layout
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -55,7 +108,12 @@ async def stream_workflow(prompt: str):
 
 
 # Chat input for the user
-if prompt := st.chat_input("Enter your requirements here (e.g., 'password reset for online banking')"):
+num_checked = sum(st.session_state.agents.values())
+
+if num_checked == 0:
+    st.chat_input("Enter your requirements here...", disabled=True, key="disabled_chat_input")
+    st.warning("Please select at least one agent to proceed.")
+elif prompt := st.chat_input("Enter your requirements here (e.g., 'password reset for online banking')"):
     workflow_successful = False
     try:
         loop = asyncio.get_running_loop()
